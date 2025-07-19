@@ -1,18 +1,22 @@
-export function validateAndSanitizeEmail(email: string) {
-  const trimmed = email.trim().toLowerCase();
+export function validateAndSanitizeEmail(email: string): { isValid: boolean; sanitized: string; error?: string } {
+  const sanitized = email.trim().toLowerCase();
 
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!regex.test(trimmed)) {
-    return { isValid: false, sanitized: '', error: 'Adresse email invalide' };
+  if (!regex.test(sanitized)) {
+    return { isValid: false, sanitized, error: 'Email invalide.' };
   }
 
-  return { isValid: true, sanitized: trimmed };
+  return { isValid: true, sanitized };
 }
 
 export function secureCleanup(data: any) {
-  // Ici tu peux par exemple « nettoyer » la mémoire en supprimant les données sensibles
-  if (data.email) data.email = '';
-  if (data.results) data.results = [];
+  try {
+    for (const key in data) {
+      if (Object.prototype.hasOwnProperty.call(data, key)) {
+        delete data[key];
+      }
+    }
+  } catch (err) {
+    console.error('Erreur nettoyage:', err);
+  }
 }
-

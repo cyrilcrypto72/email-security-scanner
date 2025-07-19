@@ -1,27 +1,46 @@
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface BreachData {
   email: string;
   breachCount: number;
-  breaches: any[];
+  breaches: {
+    name: string;
+    breachDate: string;
+    dataClasses: string[];
+  }[];
   scannedAt: string;
 }
 
-export async function saveSearchHistory(data: BreachData) {
-  const existing = await SecureStore.getItemAsync('history');
-  let history: BreachData[] = [];
-  if (existing) {
-    history = JSON.parse(existing);
+const STORAGE_KEY = 'emailScanHistory';
+
+export async function saveSearchHistory(breachData: BreachData) {
+  try {
+    const historyRaw = await AsyncStorage.getItem(STORAGE_KEY);
+    const history = historyRaw ? JSON.parse(historyRaw) : [];
+
+    history.unshift(breachData);
+
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(0, 20))); // max 20
+  } catch (err) {
+    console.error('Erreur sauvegarde historique:', err);
   }
-  history.push(data);
-  await SecureStore.setItemAsync('history', JSON.stringify(history));
 }
 
 export async function getSearchHistory(): Promise<BreachData[]> {
-  const data = await SecureStore.getItemAsync('history');
-  if (data) {
-    return JSON.parse(data);
+  try {
+    const historyRaw = await AsyncStorage.getItem(STORAGE_KEY);
+    return historyRaw ? JSON.parse(historyRaw) : [];
+  } catch (err) {
+    console.error('Erreur récupération historique:', err);
+    return [];
   }
-  return [];
+}
+
+export async function clearSearchHistory() {
+  try {
+    await AsyncStorage.removeItem(STORAGE_KEY);
+  } catch (err) {
+    console.error('Erreur nettoyage historique:', err);
+  }
 }
 
